@@ -1,67 +1,43 @@
-#include <iostream>
-#include <stdio.h>
+#include <fstream>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <readline/readline.h>
-// #include "helpers.h"
+#include "helpers.h"
 
 #define endl '\n'
-#define GRN  "\x1B[32m"
-#define WHT   "\x1B[37m"
-#define BLU  "\x1B[34m"
-#define RESET "\x1B[0m"
-#define HISTFILE "~/.oz_history"
+#define HISTFILE ".oz_history"
 
 using namespace std;
 
 // g++ oz.cpp -lreadline
 
-// parse the input line into and return *argv[] of the same
-char **parse_args(char *line){
-	char **args = new char*;
-	char *sep=" ", *token;
-	int index=0;
-
-	token = strtok(line, sep);
-	while(token){
-		args[index++]=token;
-		token = strtok(NULL, sep);
-		// cout<<args[index-1]<<" ";
-	}
-	args[index]=NULL;
-	return args;
-}
-
-void help(){
-	printf(BLU "\nHello. I am OZ, the shell. I recongnise the following commands.\n\n" RESET);
-	printf(BLU "clr" RESET " - Clear the screen.\n");
-	printf(BLU "pause" RESET " - Pause operations of the shell until ‘Enter’ is pressed.\n");
-	printf(BLU "help" RESET " - Display User Manual.\n");
-	printf(BLU "quit" RESET " - Quit the shell.\n");
-	printf(BLU "history" RESET " - Display the list of previously executed commands.\n");
-	printf(BLU "cd" RESET " - Display the list of previously executed commands.\n");
-	printf(BLU "dir" RESET " - List the contents of the specified directory.\n");
-	printf(BLU "echo" RESET " - Echo the comment entered after the command.\n");
-	printf("\nI can also perform basic Linux/Unix system commands like pwd, ls, etc.\n\n");
-}
-
 int main() {
 	char **args;
 	char *line;
 	pid_t child_pid;
+
+	FILE *histfile = fopen(HISTFILE, "ab");
+
+	// TODO: Handle signals
+
 	while(1){
 		printf(GRN "≈> " RESET);
 		line=readline("");
+
+		fprintf(histfile, "%s\n", line);
+
 		args=parse_args(line);
 
 		// handle cd
-		if(strcmp(args[0],"cd")==0){
+		if(strcmp(args[0],"cd")==0){ //done
 			chdir(args[1]);
 			continue; // perform cd and rerun parent: no forking
 		}
-		else if(strcmp(args[0],"quit")==0){
+		else if(strcmp(args[0],"quit")==0){ //done
+			fclose(histfile);
 			exit(0);
 			continue;
 		}
@@ -77,20 +53,18 @@ int main() {
 		// if the process is child execute it, else if parent: wait
 		if (!child_pid){
 			
-			if(strcmp(args[0],"clr")==0){
+			if(strcmp(args[0],"clr")==0){ //done
 				cout << "\033[2J\033[1;1H";
-				continue; // perform cd and rerun parent: no forking
 			}
-			else if(strcmp(args[0],"pause")==0){
+			else if(strcmp(args[0],"pause")==0){ //done
 				system("read -p 'Paused.....'");
 				// system("read -p 'Paused.....' var");
-				continue;
 			}
-			else if(strcmp(args[0],"help")==0){
+			else if(strcmp(args[0],"help")==0){ //done
 				help();
-				continue;
-			}else if(strcmp(args[0],"history")==0){
-				continue;
+			}
+			else if(strcmp(args[0],"history")==0){ //done
+				history((char*)HISTFILE);
 			}
 			else if(strcmp(args[0],"dir")==0){ // not working for absolute paths
 				execvp((char*)("ls"), args);
@@ -98,7 +72,7 @@ int main() {
 			else if(strcmp(args[0],"environ")==0){
 				continue;
 			}
-			else if(strcmp(args[0],"echo")==0){
+			else if(strcmp(args[0],"echo")==0){ //done
 				int i=1;
 				while(args[i]!=NULL){
 					cout<<args[i++]<<" ";

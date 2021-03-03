@@ -1,0 +1,12 @@
+~ $ clang -std=c17 -Wall -Wextra -pedantic t0.c -o t0
+~ $ ./t0
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+
+Fusce dignissim facilisis ligula consectetur hendrerit. Vestibulum porttitor aliquam luctus. Nam pharetra lorem vel ornare cond|*
+imentum.
+
+Praesent et nunc at libero vulputate convallis. Cras egestas nunc vitae eros vehicula hendrerit. Pellentesque in est et sapien |*
+dignissim molestie.
+
+
+d
