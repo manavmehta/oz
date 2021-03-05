@@ -3,6 +3,9 @@
 #define GRN  "\x1B[32m"
 #define WHT   "\x1B[37m"
 #define BLU  "\x1B[34m"
+#define YEL  "\x1B[33m"
+#define MAG  "\x1B[35m"
+#define CYN  "\x1B[36m"
 #define RESET "\x1B[0m"
 
 #define endl '\n'
@@ -50,4 +53,32 @@ void history(char *HISTFILE){
 
 void sigint_handler(int signalnumber) {
     printf("Caught SIGINT\n");
+}
+
+void dir(const char *dir_arg){
+	struct dirent *curr_dir;
+	DIR *dh = opendir(dir_arg);
+
+	// Bonus: handle dir <no args> ie present dir
+
+	if(!dh){
+		if(errno == ENOENT)
+			perror("Invalid directory");
+		else
+			perror("Unable to read the directory. Please try with sudo");
+		exit(EXIT_FAILURE); // exit code: 8
+	}
+
+	// Directory is valid and readable -> print contents
+	// Print dir contents till unreadable entry encountered
+	while ((curr_dir = readdir(dh))){
+		if(curr_dir->d_name[0]=='.')
+			if(!curr_dir->d_name[1] || curr_dir->d_name[1]=='.')
+				continue;
+			else
+				printf(YEL "%s     ", curr_dir->d_name);
+		else
+			printf(BLU "%s     ", curr_dir->d_name);
+	}
+	printf("\n");
 }

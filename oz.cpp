@@ -4,8 +4,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <readline/readline.h>
+#include <readline/readline.h> //add in makefile
 #include <signal.h>
+#include <dirent.h>
+#include <errno.h>
+
 #include "helpers.h"
 
 #define endl '\n'
@@ -15,16 +18,26 @@ using namespace std;
 
 // g++ oz.cpp -lreadline
 
-int main() {
+void run_shell(char **args, char* line, pid_t child_pid, FILE *histfile);
+
+int main(int argc, char** argv) {
 	char **args;
 	char *line;
 	pid_t child_pid;
 
 	FILE *histfile = fopen(HISTFILE, "ab");
 
-	// TODO: Handle signals
-
 	signal(SIGINT, SIG_IGN);
+
+	if(argc == 1)
+		run_shell(args, line, child_pid, histfile);
+	else{
+		// read from file
+	}
+	return 0;
+}
+
+void run_shell(char **args, char* line, pid_t child_pid, FILE *histfile){
 	while(1){
 		printf(GRN "≈> " RESET);
 		line=readline("");
@@ -56,13 +69,13 @@ int main() {
 
 		// if the process is child execute it, else if parent: wait
 		if (!child_pid){
-			
+            signal(SIGINT, SIG_DFL);
+
 			if(strcmp(args[0],"clr")==0){ //done
 				cout << "\033[2J\033[1;1H";
 			}
 			else if(strcmp(args[0],"pause")==0){ //done
 				system("read -p 'Paused.....'");
-				// system("read -p 'Paused.....' var");
 			}
 			else if(strcmp(args[0],"help")==0){ //done
 				help();
@@ -71,9 +84,10 @@ int main() {
 				history((char*)HISTFILE);
 			}
 			else if(strcmp(args[0],"dir")==0){ // not working for absolute paths
-				execvp((char*)("ls"), args);
+				dir(args[1]);
 			}
 			else if(strcmp(args[0],"environ")==0){
+				// /etc/env in linux: sattu
 				continue;
 			}
 			else if(strcmp(args[0],"echo")==0){ //done
@@ -96,10 +110,8 @@ int main() {
 		}
 		else{
 			wait(NULL);
-			// waitpid(child_pid, &stat_loc, WUNTRACED);
 		}
 		free(line);
 		free(args);
 	}
-	return 0;
 }
