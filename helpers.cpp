@@ -47,3 +47,7 @@ void history(char *HISTFILE){
 	cout<<endl;
 	
 }
+
+void sigint_handler(int signalnumber) {
+    printf("Caught SIGINT\n");
+}

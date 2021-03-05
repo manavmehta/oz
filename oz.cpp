@@ -5,6 +5,7 @@
 #include <string.h>
 #include <signal.h>
 #include <readline/readline.h>
+#include <signal.h>
 #include "helpers.h"
 
 #define endl '\n'
@@ -23,9 +24,12 @@ int main() {
 
 	// TODO: Handle signals
 
+	signal(SIGINT, SIG_IGN);
 	while(1){
 		printf(GRN "≈> " RESET);
 		line=readline("");
+
+		if(strlen(line)==0) continue;
 
 		fprintf(histfile, "%s\n", line);
 
@@ -99,6 +103,3 @@ int main() {
 	}
 	return 0;
 }
-
-
-// handle invalid commands as it is blocking other commands for the same numebr of times like quit command.
