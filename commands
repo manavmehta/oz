@@ -1,4 +1,2 @@
-clr
-dir ../
-dir ../
-dir ../oz
+echo sattu.c
+echo sattu.py

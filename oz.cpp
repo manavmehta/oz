@@ -21,9 +21,12 @@ std::condition_variable cv;
 
 // g++ oz.cpp -lreadline
 
-void run_shell(char* line, FILE *histfile);
+void run_shell(char* line, FILE *histfile, char *envp[]);
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[], char *envp[]) {
+
+	create_env();
+
 	char *line;
 
 	FILE *histfile = fopen(HISTFILE, "ab");
@@ -36,7 +39,7 @@ int main(int argc, char* argv[]) {
 			printf(GRN "≈> " RESET);
 			line=readline("");
 
-			run_shell(line, histfile);
+			run_shell(line, histfile, envp);
 			free(line);
 		}
 	}
@@ -48,17 +51,19 @@ int main(int argc, char* argv[]) {
 			while((int)chunk[i]>=32 && (int)chunk[i]<=126) // valid character
 				i++;
 			chunk[i]='\0'; // terminating the chunk is necessary
-			run_shell(chunk, histfile);
+			printf("%s\n", chunk);
+			run_shell(chunk, histfile, envp);
 		}
+		fclose(commandsfile);
 		exit(0);
 	}
 	return 0;
 }
 
-void run_shell(char* line, FILE *histfile){
+void run_shell(char* line, FILE *histfile, char *envp[]){
 	if(strlen(line)==0) return;
 
-	fprintf(histfile, "%s\n", line);
+	fprintf(histfile, "%s\n", line); // append to histfile
 
 	pid_t child_pid;
 	char **args=parse_args(line);
@@ -101,7 +106,10 @@ void run_shell(char* line, FILE *histfile){
 			dir(args[1]);
 		}
 		else if(strcmp(args[0],"environ")==0){
-			// /etc/env in linux: sattu
+			int i; 
+			for (i = 0; envp[i] != NULL; i++) 
+				printf("\n%s", envp[i]); 
+			printf("%c", endl);
 			return;
 		}
 		else if(strcmp(args[0],"echo")==0){ //done

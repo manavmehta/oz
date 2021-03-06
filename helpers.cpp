@@ -1,5 +1,6 @@
 #include<iostream>
 #include<stdio.h>
+#include <unistd.h>
 #define GRN  "\x1B[32m"
 #define WHT   "\x1B[37m"
 #define BLU  "\x1B[34m"
@@ -79,4 +80,11 @@ void dir(const char *dir_arg){
 			printf(BLU "%s     ", curr_dir->d_name);
 	}
 	printf("\n");
+}
+
+void create_env(){
+	FILE *envfile = fopen("environment", "wb");
+	char cwd[200];
+	getcwd(cwd, sizeof(cwd));
+	fprintf(envfile, "shell=%s=oz\n", cwd);
 }
