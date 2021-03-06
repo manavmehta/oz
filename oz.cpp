@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <dirent.h>
 #include <errno.h>
+#include<thread>
 
 #include "helpers.h"
 
@@ -15,103 +16,116 @@
 #define HISTFILE ".oz_history"
 
 using namespace std;
+std::mutex mtx;
+std::condition_variable cv;
 
 // g++ oz.cpp -lreadline
 
-void run_shell(char **args, char* line, pid_t child_pid, FILE *histfile);
+void run_shell(char* line, FILE *histfile);
 
-int main(int argc, char** argv) {
-	char **args;
+int main(int argc, char* argv[]) {
 	char *line;
-	pid_t child_pid;
 
 	FILE *histfile = fopen(HISTFILE, "ab");
 
 	signal(SIGINT, SIG_IGN);
 
-	if(argc == 1)
-		run_shell(args, line, child_pid, histfile);
+	// if argc == 1 run realtime shell, else use argv arg as filename to run commands
+	if(argc == 1){
+		while(1){
+			printf(GRN "≈> " RESET);
+			line=readline("");
+
+			run_shell(line, histfile);
+			free(line);
+		}
+	}
 	else{
-		// read from file
+		FILE *commandsfile = fopen(argv[1], "rb");
+		char chunk[200];
+		while(fgets(chunk, sizeof(chunk), commandsfile)){
+			int i=0;
+			while((int)chunk[i]>=32 && (int)chunk[i]<=126) // valid character
+				i++;
+			chunk[i]='\0'; // terminating the chunk is necessary
+			run_shell(chunk, histfile);
+		}
+		exit(0);
 	}
 	return 0;
 }
 
-void run_shell(char **args, char* line, pid_t child_pid, FILE *histfile){
-	while(1){
-		printf(GRN "≈> " RESET);
-		line=readline("");
+void run_shell(char* line, FILE *histfile){
+	if(strlen(line)==0) return;
 
-		if(strlen(line)==0) continue;
+	fprintf(histfile, "%s\n", line);
 
-		fprintf(histfile, "%s\n", line);
+	pid_t child_pid;
+	char **args=parse_args(line);
 
-		args=parse_args(line);
+	// handle cd
+	if(strcmp(args[0],"cd")==0){ //done
+		chdir(args[1]);
+		return; // perform cd and rerun parent: no forking
+	}
+	else if(strcmp(args[0],"quit")==0){ //done
+		fclose(histfile);
+		exit(0);
+		return;
+	}	
 
-		// handle cd
-		if(strcmp(args[0],"cd")==0){ //done
-			chdir(args[1]);
-			continue; // perform cd and rerun parent: no forking
+	child_pid = fork();
+
+	if(child_pid<0){
+		perror("failed to create a fork.");
+		exit(1);
+	}
+
+	// if the process is child execute it, else if parent: wait
+	if (!child_pid){
+		signal(SIGINT, SIG_DFL);
+
+		if(strcmp(args[0],"clr")==0){ //done
+			fputs("\033[2J\033[1;1H",stdout);
 		}
-		else if(strcmp(args[0],"quit")==0){ //done
-			fclose(histfile);
-			exit(0);
-			continue;
+		else if(strcmp(args[0],"pause")==0){ //done
+			system("read -p 'Paused.....'");
 		}
-		
-
-		child_pid = fork();
-
-		if(child_pid<0){
-			perror("failed to create a fork.");
-			exit(1);
+		else if(strcmp(args[0],"help")==0){ //done
+			help();
 		}
-
-		// if the process is child execute it, else if parent: wait
-		if (!child_pid){
-            signal(SIGINT, SIG_DFL);
-
-			if(strcmp(args[0],"clr")==0){ //done
-				cout << "\033[2J\033[1;1H";
+		else if(strcmp(args[0],"history")==0){ //done
+			history((char*)HISTFILE);
+		}
+		else if(strcmp(args[0],"dir")==0){ // not working for absolute paths
+			dir(args[1]);
+		}
+		else if(strcmp(args[0],"environ")==0){
+			// /etc/env in linux: sattu
+			return;
+		}
+		else if(strcmp(args[0],"echo")==0){ //done
+			int i=1;
+			while(args[i]!=NULL){
+				printf("%s ", args[i++]);
 			}
-			else if(strcmp(args[0],"pause")==0){ //done
-				system("read -p 'Paused.....'");
-			}
-			else if(strcmp(args[0],"help")==0){ //done
-				help();
-			}
-			else if(strcmp(args[0],"history")==0){ //done
-				history((char*)HISTFILE);
-			}
-			else if(strcmp(args[0],"dir")==0){ // not working for absolute paths
-				dir(args[1]);
-			}
-			else if(strcmp(args[0],"environ")==0){
-				// /etc/env in linux: sattu
-				continue;
-			}
-			else if(strcmp(args[0],"echo")==0){ //done
-				int i=1;
-				while(args[i]!=NULL){
-					cout<<args[i++]<<" ";
-				}
-				cout<<endl;
-				continue;
-			}
-			else{
-				int exec_response = execvp(args[0], args);
-
-				// execvp returns -1 on failure and nothing on success; API may return other negative vals
-				if(exec_response < 0){
-					string error_message = "could not execute: " + (string)args[0];
-					perror(&error_message[0]);
-				}
-			}
+			printf("%c", endl);
+			return;
 		}
 		else{
-			wait(NULL);
+			int exec_response = execvp(args[0], args);
+
+			// execvp returns -1 on failure and nothing on success; API may return other negative vals
+			if(exec_response < 0){
+				string error_message = "could not execute: " + (string)args[0];
+				perror(&error_message[0]);
+			}
 		}
-		free(line);
-		free(args);
 	}
+	else{
+		wait(NULL);
+		// std::unique_lock<std::mutex> lck(mtx);
+		// cv.wait(lck);
+	}
+	free(args);
 }

@@ -35,7 +35,6 @@ char **parse_args(char *line){
 	while(token){
 		args[index++]=token;
 		token = strtok(NULL, sep);
-		// cout<<args[index-1]<<" ";
 	}
 	args[index]=NULL;
 	return args;
@@ -48,7 +47,6 @@ void history(char *HISTFILE){
 		fputs(chunk, stdout);
 	}
 	cout<<endl;
-	
 }
 
 void sigint_handler(int signalnumber) {
