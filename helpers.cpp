@@ -1,5 +1,6 @@
 #include<iostream>
 #include<stdio.h>
+#include <unistd.h>
 #define GRN  "\x1B[32m"
 #define WHT   "\x1B[37m"
 #define BLU  "\x1B[34m"
@@ -35,7 +36,6 @@ char **parse_args(char *line){
 	while(token){
 		args[index++]=token;
 		token = strtok(NULL, sep);
-		// cout<<args[index-1]<<" ";
 	}
 	args[index]=NULL;
 	return args;
@@ -48,7 +48,6 @@ void history(char *HISTFILE){
 		fputs(chunk, stdout);
 	}
 	cout<<endl;
-	
 }
 
 void sigint_handler(int signalnumber) {
@@ -81,4 +80,12 @@ void dir(const char *dir_arg){
 			printf(BLU "%s     ", curr_dir->d_name);
 	}
 	printf("\n");
+}
+
+void create_env(){
+	FILE *envfile = fopen("environment", "wb");
+	char cwd[200];
+	getcwd(cwd, sizeof(cwd));
+	fprintf(envfile, "shell=%s=oz\n", cwd);
+	fclose(envfile);
 }
