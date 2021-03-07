@@ -6,6 +6,7 @@
         "fstream": "cpp",
         "locale": "cpp",
         "__mutex_base": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "__locale": "cpp"
     }
 }

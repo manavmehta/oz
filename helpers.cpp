@@ -83,9 +83,9 @@ void dir(const char *dir_arg){
 }
 
 void create_env(){
-	FILE *envfile = fopen("environment", "wb");
+	FILE *envfilewrite = fopen("environment", "wb");
 	char cwd[200];
 	getcwd(cwd, sizeof(cwd));
-	fprintf(envfile, "shell=%s=oz\n", cwd);
-	fclose(envfile);
+	fprintf(envfilewrite, "shell=%s\n", cwd);
+	fclose(envfilewrite);
 }

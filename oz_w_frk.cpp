@@ -16,12 +16,10 @@
 #define HISTFILE ".oz_history"
 
 using namespace std;
-std::mutex mtx;
-std::condition_variable cv;
 
 // g++ oz.cpp -lreadline
 
-void run_shell(char* line, FILE *histfile, char *envp[]);
+void run_shell(char* line, char *envp[]);
 
 int main(int argc, char* argv[], char *envp[]) {
 
@@ -29,17 +27,15 @@ int main(int argc, char* argv[], char *envp[]) {
 
 	char *line;
 
-	FILE *histfile = fopen(HISTFILE, "ab");
-
 	signal(SIGINT, SIG_IGN);
 
-	// if argc == 1 run realtime shell, else use argv arg as filename to run commands
+	// if argc == 1 run shell in realtime, else use argv arg as filename to run commands
 	if(argc == 1){
 		while(1){
 			printf(GRN "≈> " RESET);
 			line=readline("");
 
-			run_shell(line, histfile, envp);
+			run_shell(line, envp);
 			free(line);
 		}
 	}
@@ -51,8 +47,7 @@ int main(int argc, char* argv[], char *envp[]) {
 			while((int)chunk[i]>=32 && (int)chunk[i]<=126) // valid character
 				i++;
 			chunk[i]='\0'; // terminating the chunk is necessary
-			printf("%s\n", chunk);
-			run_shell(chunk, histfile, envp);
+			run_shell(chunk, envp);
 		}
 		fclose(commandsfile);
 		exit(0);
@@ -60,12 +55,14 @@ int main(int argc, char* argv[], char *envp[]) {
 	return 0;
 }
 
-void run_shell(char* line, FILE *histfile, char *envp[]){
+void run_shell(char* line, char *envp[]){
 	if(strlen(line)==0) return;
 
-	fprintf(histfile, "%s\n", line); // append to histfile
+	// writing to histfile
+	FILE *histfile = fopen(HISTFILE, "ab");
+	fprintf(histfile, "%s\n", line);
+	fclose(histfile);
 
-	pid_t child_pid;
 	char **args=parse_args(line);
 
 	// handle cd
@@ -74,11 +71,12 @@ void run_shell(char* line, FILE *histfile, char *envp[]){
 		return; // perform cd and rerun parent: no forking
 	}
 	else if(strcmp(args[0],"quit")==0){ //done
-		fclose(histfile);
+		// fclose(histfile);
 		exit(0);
 		return;
 	}	
 
+	pid_t child_pid;
 	child_pid = fork();
 
 	if(child_pid<0){
@@ -88,13 +86,15 @@ void run_shell(char* line, FILE *histfile, char *envp[]){
 
 	// if the process is child execute it, else if parent: wait
 	if (!child_pid){
+
 		signal(SIGINT, SIG_DFL);
 
 		if(strcmp(args[0],"clr")==0){ //done
 			fputs("\033[2J\033[1;1H",stdout);
 		}
 		else if(strcmp(args[0],"pause")==0){ //done
-			system("read -p 'Paused.....'");
+			printf("Paused.....\n");  
+			getchar(); 
 		}
 		else if(strcmp(args[0],"help")==0){ //done
 			help();
@@ -106,10 +106,21 @@ void run_shell(char* line, FILE *histfile, char *envp[]){
 			dir(args[1]);
 		}
 		else if(strcmp(args[0],"environ")==0){
+			printf(GRN "%s", "environment variables for the current shell:\n" RESET);
+			FILE *envfile = fopen("environment", "rb");
+			char chunk[200];
+			while(fgets(chunk, sizeof(chunk), envfile)){
+				fputs(chunk, stdout);
+			}
+			cout<<endl;
+
+			printf(GRN "%s", "environment variables for the bash(or your default) shell:\n" RESET);
 			int i; 
 			for (i = 0; envp[i] != NULL; i++) 
 				printf("\n%s", envp[i]); 
 			printf("%c", endl);
+
+
 			return;
 		}
 		else if(strcmp(args[0],"echo")==0){ //done
@@ -120,6 +131,14 @@ void run_shell(char* line, FILE *histfile, char *envp[]){
 			printf("%c", endl);
 			return;
 		}
+		
+		else if(strcmp(args[0],"pwd")==0){ //done
+			char cwd[200];
+			getcwd(cwd, sizeof(cwd));
+			printf("%s\n", cwd);
+			return;
+		}
+
 		else{
 			int exec_response = execvp(args[0], args);
 
@@ -129,11 +148,10 @@ void run_shell(char* line, FILE *histfile, char *envp[]){
 				perror(&error_message[0]);
 			}
 		}
+		exit(0);
 	}
 	else{
 		wait(NULL);
-		// std::unique_lock<std::mutex> lck(mtx);
-		// cv.wait(lck);
 	}
 	free(args);
 }
