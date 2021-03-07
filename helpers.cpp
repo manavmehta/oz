@@ -50,15 +50,9 @@ void history(char *HISTFILE){
 	cout<<endl;
 }
 
-void sigint_handler(int signalnumber) {
-    printf("Caught SIGINT\n");
-}
-
 void dir(const char *dir_arg){
 	struct dirent *curr_dir;
 	DIR *dh = opendir(dir_arg);
-
-	// Bonus: handle dir <no args> ie present dir
 
 	if(!dh){
 		if(errno == ENOENT)

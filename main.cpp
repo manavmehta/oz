@@ -71,7 +71,6 @@ void run_shell(char* line, char *envp[]){
 		return; // perform cd and rerun parent: no forking
 	}
 	else if(strcmp(args[0],"quit")==0){ //done
-		// fclose(histfile);
 		exit(0);
 		return;
 	}	

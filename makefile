@@ -4,5 +4,5 @@ oz: main.o
 main.o: main.cpp
 	g++ -c -lreadline main.cpp
 
-executable:
-	chmod +x ./a.out
+# executable:
+#	chmod +x oz
