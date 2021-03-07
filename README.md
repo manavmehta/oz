@@ -13,9 +13,9 @@ If there is a need to install, use these commands:
 
 Now to compile, just use `make` and use the execuable `oz` to run the shell in prompt.
 
-If the user wants the shell to read commands from external file, use `./oz <filename>`
+If the user wants the shell to read commands from external file, use `./a.out <filename>`
 
-For convenience, put the commands in the file `commands` and run `./oz commands`
+For convenience, put the commands in the file `commands` and run `./a.out commands`
 
 ### Language and Modules used
 C++ 11

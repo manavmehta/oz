@@ -5,4 +5,4 @@ main.o: main.cpp
 	g++ -c -lreadline main.cpp
 
 executable:
-	chmod +x main.o
+	chmod +x ./a.out

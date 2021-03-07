@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <readline/readline.h> //add in makefile
 
-#include "helpers.h"
+#include "helpers.hpp"
 
 #define endl '\n'
 #define HISTFILE ".oz_history"
