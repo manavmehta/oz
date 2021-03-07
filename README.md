@@ -31,7 +31,3 @@ Headers:
 * errno.h - for standar error codes
 * readline/readline.h - for getting input from realtime shell on prompt
 
-
-# Question 2
-
-# Question 3
