@@ -1,14 +1,12 @@
 #include <fstream>
 #include <stdlib.h>
-#include <sys/wait.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <string.h>
-#include <signal.h>
-#include <readline/readline.h> //add in makefile
 #include <signal.h>
 #include <dirent.h>
 #include <errno.h>
-#include<thread>
+#include <readline/readline.h> //add in makefile
 
 #include "helpers.h"
 
